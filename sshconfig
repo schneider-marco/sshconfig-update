@@ -19,7 +19,7 @@ upload_config() {
         git commit -m "Update SSH config"
         git push origin main
         echo "Config file uploaded"
-        cleanup
+        #cleanup
     else
         echo "No local SSH config file found to upload"
     fi
