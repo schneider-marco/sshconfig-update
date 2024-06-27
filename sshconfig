@@ -1,0 +1,78 @@
+#!/usr/bin/bash
+
+URL="git@github.com:schneider-marco/sshconfig.git"
+DESTINATION="/tmp/sshconfig"
+USER_SSH_CONFIG="$HOME/.ssh/config"
+DIFFERENCE=FALSE
+
+download_config() {
+    git clone "$URL" "$DESTINATION"
+}
+
+upload_config() {
+    if [ -f "$USER_SSH_CONFIG" ]; then
+        download_config
+        rm "$DESTINATION/config"
+        cp "$USER_SSH_CONFIG" "$DESTINATION/config"
+        git add *
+        git commit -m "Update SSH config"
+        git push origin main
+        echo "Config file uploaded"
+        cleanup
+    else
+        echo "No local SSH config file found to upload"
+    fi
+}
+
+cleanup() {
+    echo "Cleaning up"
+    rm -rf "$DESTINATION"
+    echo "Done"
+    exit
+}
+
+update_config() {
+    download_config
+
+    if [ -f "$DESTINATION/config" ]; then
+        if [ -f "$USER_SSH_CONFIG" ]; then
+            if diff "$DESTINATION/config" "$USER_SSH_CONFIG" > /dev/null; then
+                DIFFERENCE=false
+            else
+                DIFFERENCE=true
+            fi
+        else
+            echo "No SSH config file for user found"
+        fi
+    else
+        echo "File 'config' not found in cloned repository"
+    fi
+
+    if [ "$DIFFERENCE" = true ]; then
+        echo "Do you wish to override the current SSH config file [y/n]"
+        read -r answer
+        if [[ $answer == "y" || $answer == "Y" ]]; then
+            cp "$DESTINATION/config" "$USER_SSH_CONFIG"
+            echo "Config file updated"
+            cleanup
+        else
+            cleanup
+        fi
+    else
+        echo "Config file already up to date"
+        cleanup
+    fi
+}
+
+case "$1" in
+    update)
+        update_config
+        ;;
+    upload)
+        upload_config
+        ;;
+    *)
+        echo "Usage: $0 {update|upload}"
+        ;;
+esac
+
