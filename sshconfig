@@ -14,12 +14,12 @@ upload_config() {
         download_config
         rm "$DESTINATION/config"
         cp "$USER_SSH_CONFIG" "$DESTINATION/config"
-        cd DESTINATION
-        git add *
+        cd $DESTINATION
+        git add config
         git commit -m "Update SSH config"
         git push origin main
         echo "Config file uploaded"
-        #cleanup
+        cleanup
     else
         echo "No local SSH config file found to upload"
     fi
